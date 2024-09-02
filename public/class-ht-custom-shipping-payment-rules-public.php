@@ -100,23 +100,45 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 
 	}
 
+	/**
+	 * Include the custom shipping method class
+	 *
+	 * @return void
+	 */
 	public function include_shipping_method()
 	{
 		require_once plugin_dir_path( dirname( __FILE__ ) ) . '/includes/class-ht-custom-shipping-method.php';
 	}
 
+	/**
+	 * Add the custom shipping method to the available shipping methods
+	 *
+	 * @param $methods The available shipping methods
+	 * @return array
+	 */
 	public function add_shipping_method($methods)
 	{
 		$methods['ht_custom_shipping'] = 'HT_Shipping_Method';
 		return $methods;
 	}
 
+	/**
+	 * Clear the WC shipping rates cache
+	 *
+	 * @param $methods The available shipping methods
+	 * @return void
+	 */
 	public function clear_wc_shipping_rates_cache($methods)
 	{
 		WC_Cache_Helper::get_transient_version( 'shipping', true );
 	}
 	
-
+	/**
+	 * Maybe disable the COD payment gateway
+	 *
+	 * @param $cash_on_delivery_props The COD props from the session
+	 * @return array
+	 */
 	public function enable_disable_payment_gateway($available_gateways)
 	{
 		if(empty(WC()->session)){ return; }
@@ -130,6 +152,13 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 		return $available_gateways;
 	}
 
+	/**
+	 * Maybe add a fee to the cart if the chosen payment method is COD
+	 *
+	 * @param $chosen_payment_method The chosen payment method
+	 * @param $cash_on_delivery_props The COD props from the session
+	 * @return void
+	 */
 	public function add_cod_payment_gateway_fee()
 	{
 		if (is_admin() && !defined('DOING_AJAX')) {
@@ -149,5 +178,38 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 			WC()->cart->add_fee(__('ΑΝΤΙΚΑΤΑΒΟΛΗ', 'htech'), (float)$cod_fee, true, 'standard');
 		}
 
+	}
+
+	/**
+	 * Maybe disable slm_delivery_service shipping method
+	 *
+	 * @param $rates The available shipping rates
+	 * @param $package The package
+	 * @return array
+	 */
+	public function enable_disable_shipping_methods($rates, $package)
+	{
+	
+		$disable = false;
+
+		foreach ($package['contents'] as $cart_item) {
+			$product = $cart_item['data'];
+			$product_id = $product->get_id();
+		}
+	
+		$shipping_method_id = 'slm_delivery_service';
+	
+		// Check the condition
+		if ($disable) {
+			// Loop through the available rates
+			foreach ($rates as $rate_key => $rate) {
+				// Check if this is the shipping method we want to disable
+				if ($rate->method_id === $shipping_method_id) {
+					unset($rates[$rate_key]); // Remove the shipping method
+				}
+			}
+		}
+	
+		return $rates;
 	}
 }

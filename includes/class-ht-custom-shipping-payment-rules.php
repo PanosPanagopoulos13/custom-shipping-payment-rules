@@ -182,7 +182,10 @@ class Ht_Custom_Shipping_Payment_Rules {
 
 		// Enable disable payment methods
 		$this->loader->add_filter( 'woocommerce_available_payment_gateways', $plugin_public, 'enable_disable_payment_gateway' );
-		// // Add a fee to the COD payment gateway
+		// Enable disable shipping methods
+		//$this->loader->add_filter( 'woocommerce_package_rates', $plugin_public, 'enable_disable_shipping_methods',10,2 );
+
+		// Add a fee to the COD payment gateway
 		$this->loader->add_action( 'woocommerce_cart_calculate_fees', $plugin_public, 'add_cod_payment_gateway_fee' );
 	}
 

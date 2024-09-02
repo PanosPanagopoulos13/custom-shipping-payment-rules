@@ -33,8 +33,6 @@
 	// Update checkout on payment method change. This is needed beause we wanna add a custom fee based on the shipping method
 	// @see Ht_Custom_Shipping_Payment_Rules_Public::add_cod_payment_gateway_fee()
 	$( document ).ready(function() {
-		console.log('ready');
-		console.log($('form.checkout input[name="payment_method"]'));
 		$('form.checkout').on('change', 'input[name="payment_method"]', () => {
 			console.log('updating');
 			$( document.body ).trigger( 'update_checkout', { update_shipping_method: false } );
