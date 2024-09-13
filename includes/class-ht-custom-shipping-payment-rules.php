@@ -187,6 +187,15 @@ class Ht_Custom_Shipping_Payment_Rules {
 
 		// Add a fee to the COD payment gateway
 		$this->loader->add_action( 'woocommerce_cart_calculate_fees', $plugin_public, 'add_cod_payment_gateway_fee' );
+
+		// Add hidden field for transport type
+		$this->loader->add_action( 'woocommerce_checkout_fields', $plugin_public, 'woocommerce_checkout_fields' );
+
+		// Print script to change the transport type if ht_custom_shipping method is chosen
+		$this->loader->add_action( 'woocommerce_review_order_after_order_total', $plugin_public, 'woocommerce_review_order_after_order_total' );
+
+		// Save the transport type to order
+		$this->loader->add_action( 'woocommerce_checkout_update_order_meta', $plugin_public, 'woocommerce_checkout_update_order_meta',10,2 );
 	}
 
 	/**
