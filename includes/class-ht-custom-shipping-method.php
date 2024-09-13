@@ -112,6 +112,8 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
                 'enabled' => true,
                 'cost' => 0,
             ]);
+            // Reset the session for the transport company, Cargo or Courier
+            WC()->session->set( 'ht_transport_company_type', null);
 
             if($shipping_country == 'GR'){
                 $cost = match ($order_has_a_bicycle) {
@@ -152,11 +154,6 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
             $children_cats = get_term_children($cat->term_id, 'product_cat');
             $children_cats[] = $cat->term_id;
             $all_cats = array_merge($all_cats, $children_cats);
-    
-            $cat = get_term_by('slug', 'podilata-2', 'product_cat');
-            $children_cats = get_term_children($cat->term_id, 'product_cat');
-            $children_cats[] = $cat->term_id;
-            $all_cats = array_merge($all_cats, $children_cats);
 
             if (has_term($all_cats, 'product_cat', $product_id)) {
                 return true;
@@ -175,6 +172,7 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
                 'enabled' => false,
                 'cost' => 0,
             ]);
+            WC()->session->set( 'ht_transport_company_type', 'Cargo GR');
             if($items_total_cost < 180){
 
                 return 10; // CARGO GR
@@ -187,6 +185,7 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
          */
         public function get_cost_for_order_with_bicycle_CY($total_weight, $items_total_cost)
         {
+            WC()->session->set( 'ht_transport_company_type', 'Cargo CY');
             if($items_total_cost < 300){
                 return 55; // COURIER COST CY
             }
@@ -201,6 +200,7 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
                     'enabled' => false,
                     'cost' => 0,
                 ]);
+                WC()->session->set( 'ht_transport_company_type', 'Cargo GR');
 
                 if($items_total_cost >= 180){
                     return 0; // FREE SHIPPING
@@ -209,6 +209,7 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
 
             }elseif($total_weight >= 3){
                 
+                WC()->session->set( 'ht_transport_company_type', 'Courier GR');
 
                 // Enable or disable cash on delivery based on the total cost of the order
                 if($items_total_cost <= 500){
@@ -234,7 +235,9 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
                 return 2.99 + ($total_weight * 0.75);
 
             }else{
-                error_log('hereeqwewqeqeqweqw');
+
+                WC()->session->set( 'ht_transport_company_type', 'Courier GR');
+
                 // Enable or disable cash on delivery based on the total cost of the order
                 if($items_total_cost <= 500){
                     // ENABLE CASH ON DELIVERY
@@ -262,12 +265,16 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
         {
             if($total_weight >= 20){
 
+                WC()->session->set( 'ht_transport_company_type', 'Cargo CY');
+
                 if($items_total_cost >= 300){
                     return 0; // FREE SHIPPING
                 }
                 return 55; // COURIER COST CY
 
             }elseif($total_weight >= 10){
+
+                WC()->session->set( 'ht_transport_company_type', 'Courier CY');
 
                 if($items_total_cost >= 180){
                     return 0; // FREE SHIPPING
@@ -276,6 +283,8 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
 
             }elseif($total_weight >= 2){
 
+                WC()->session->set( 'ht_transport_company_type', 'Courier CY');
+
                 if($items_total_cost >= 120){
                     return 0; // FREE SHIPPING
                 }
@@ -283,6 +292,8 @@ if ( ! class_exists( 'HT_Shipping_Method' ) ) {
 
             }else{
 
+                WC()->session->set( 'ht_transport_company_type', 'Courier CY');
+                
                 if($items_total_cost >= 60){
                     return 0; // FREE SHIPPING
                 }
