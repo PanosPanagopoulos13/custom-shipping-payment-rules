@@ -146,7 +146,7 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 		// error_log(print_r($cash_on_delivery_props,true));
 		// error_log(print_r($available_gateways,true));
 
-		if(!$cash_on_delivery_props['enabled']){
+		if(isset($cash_on_delivery_props['enabled']) && !$cash_on_delivery_props['enabled']){
 			unset($available_gateways['cod']);
 		}
 		return $available_gateways;
@@ -159,12 +159,21 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 	 * @param $cash_on_delivery_props The COD props from the session
 	 * @return void
 	 */
-	public function add_cod_payment_gateway_fee()
+	public function add_cod_payment_gateway_fee($cart)
 	{
 		if (is_admin() && !defined('DOING_AJAX')) {
 			return;
 		}
 		if(empty(WC()->session)){ return; }
+
+		// Get available payment gateways
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+
+		if(!isset($available_gateways['cod'])){
+			// Reset the session for the cash on delivery
+			WC()->session->set( 'ht_cash_on_delivery_props', null);
+			return;
+		}
 
 		// Get the chosen payment method
 		$chosen_payment_method = WC()->session->get('chosen_payment_method');
@@ -174,7 +183,6 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 		$cod_fee = $cash_on_delivery_props['cost'] ?? 0;
 
 		if ($chosen_payment_method === 'cod' && (float)$cod_fee > 0) {
-			error_log('adding fee');
 			WC()->cart->add_fee(__('ΑΝΤΙΚΑΤΑΒΟΛΗ', 'htech'), (float)$cod_fee, true, 'standard');
 		}
 
@@ -211,5 +219,77 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 		}
 	
 		return $rates;
+	}
+
+	/**
+	 * Add hidden field for transport type
+	 *
+	 * @param array $fields
+	 * @return array
+	 */
+	public function woocommerce_checkout_fields($fields)
+	{
+		$fields['billing']['ht_transport_type'] = [
+			'type' => 'hidden',
+			'class' => [''],
+			'clear' => true,
+			'priority' => 0,
+		];
+		return $fields;
+	}
+	
+	/**
+	 * Print script to change the transport type if ht_custom_shipping method is chosen
+	 *
+	 * @return void
+	 */
+	public function woocommerce_review_order_after_order_total()
+	{
+		$transport_type = '';
+
+		if(!empty(WC()->session)){ 
+
+			// Get the selected shipping methods array
+			$chosen_shipping_methods = WC()->session->get('chosen_shipping_methods');
+
+				// Check if a shipping method is selected
+				if (!empty($chosen_shipping_methods) && is_array($chosen_shipping_methods)) {
+				
+					$selected_shipping_method = $chosen_shipping_methods[0];
+					//error_log('Selected Shipping Method: ' . $selected_shipping_method);
+
+					if ($selected_shipping_method === 'ht_custom_shipping') {
+						$transport_type = WC()->session->get('ht_transport_company_type');
+					}
+				}
+		}
+
+		echo '
+		<script>
+			document.getElementById("ht_transport_type").value="'. $transport_type . '";
+		</script>';
+	}
+
+	/**
+	 * Save the transport type to order
+	 *
+	 * @return void
+	 */
+	public function woocommerce_checkout_update_order_meta($order_id, $data)
+	{
+		$order = wc_get_order($order_id);
+        if($order){
+            error_log(print_r($data, true));
+            $shipping_items = $order->get_items( 'shipping' );
+            if(is_array($shipping_items) && !empty($shipping_items)){
+                foreach ( $shipping_items as $item_id => $shipping_item ) {
+                    if($shipping_item->get_method_id() == 'ht_custom_shipping'){
+                        $order->update_meta_data('ht_transport_type', sanitize_text_field($_POST['ht_transport_type']));
+                        $order->save();
+                    }
+                    break;
+                }
+            }
+        }
 	}
 }
