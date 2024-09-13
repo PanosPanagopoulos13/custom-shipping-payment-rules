@@ -164,16 +164,26 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 		if (is_admin() && !defined('DOING_AJAX')) {
 			return;
 		}
-		if(empty(WC()->session)){ return; }
-
-		// Get available payment gateways
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-
-		if(!isset($available_gateways['cod'])){
-			// Reset the session for the cash on delivery
+		if(empty(WC()->session)){ 
 			WC()->session->set( 'ht_cash_on_delivery_props', null);
-			return;
+			return; 
 		}
+
+		// Get the selected shipping methods array
+		$chosen_shipping_methods = WC()->session->get('chosen_shipping_methods');
+
+		// Check if a shipping method is selected
+		if (!empty($chosen_shipping_methods) && is_array($chosen_shipping_methods)) {
+		
+			$selected_shipping_method = $chosen_shipping_methods[0];
+			//error_log('Selected Shipping Method: ' . $selected_shipping_method);
+			if ($selected_shipping_method !== 'ht_custom_shipping') {
+				// Reset the session for the cash on delivery
+				WC()->session->set( 'ht_cash_on_delivery_props', null);
+				return;
+			}
+		}
+		
 
 		// Get the chosen payment method
 		$chosen_payment_method = WC()->session->get('chosen_payment_method');
@@ -279,7 +289,7 @@ class Ht_Custom_Shipping_Payment_Rules_Public {
 	{
 		$order = wc_get_order($order_id);
         if($order){
-            error_log(print_r($data, true));
+            //error_log(print_r($data, true));
             $shipping_items = $order->get_items( 'shipping' );
             if(is_array($shipping_items) && !empty($shipping_items)){
                 foreach ( $shipping_items as $item_id => $shipping_item ) {
